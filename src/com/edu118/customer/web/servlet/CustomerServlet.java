@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
@@ -25,7 +26,7 @@ public class CustomerServlet extends BaseServlet {
 		//将表单属性与值封装到一个对象中
 		Map<String, String[]> map = request.getParameterMap();
 		Customer customer = CommonUtils.getBean(map, Customer.class);
-		
+		customer.setCid(UUID.randomUUID().toString().replace("-", ""));
 		//首先对表单进行检验,并将错误信息放入map
 		Map<String, String> error = new HashMap<String, String>();
 
@@ -138,13 +139,16 @@ public class CustomerServlet extends BaseServlet {
 		}
 		
 	}
-	
+	//找到要回显的信息
 	public String sendObjectToEdit(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String cellphone = request.getParameter("cellphone");
 		String cid = request.getParameter("cid");
 //		System.out.println(cid);
 		Customer customer = customerService.findCustomerByPhone(cellphone);
+		//设置回显信息
+		System.out.println(customer);
 		request.setAttribute("customer", customer);
+		
 		//从这里设置cid给edit.jsp,edit.jsp将id传给update做条件
 		request.setAttribute("cid", cid);
 		return "f:/edit.jsp";

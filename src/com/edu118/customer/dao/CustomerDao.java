@@ -1,15 +1,13 @@
 package com.edu118.customer.dao;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import org.apache.commons.dbutils.QueryRunner;
+import org.apache.commons.dbutils.handlers.BeanHandler;
+import org.apache.commons.dbutils.handlers.BeanListHandler;
 
-import com.edu118.customer.db.DBConnect;
 import com.edu118.customer.domain.Customer;
+import com.edu118.util.JdbcUtils;
 
 public class CustomerDao {
 	protected String findByPhone = "select * from t_customer where cellphone=?";
@@ -19,140 +17,85 @@ public class CustomerDao {
 	protected String updateByID = "update t_customer set cname=?,gender=?,birthday=?,cellphone=?,email=?,description=? where cid=?";
 	protected String queryByCondition = "select * from t_customer where (cname like ? or ? is null) and "
 			+ "(gender like ? or ? is null) and (cellphone like ? or ? is null) and (email like ? or ? is null)";
+
 	public void insertCus(Customer customer) {
 		// 向数据库中添加顾客信息
-		Connection conn = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
+		QueryRunner qr = new QueryRunner(JdbcUtils.getDataSource());
+		Object[] params = { customer.getCid(), customer.getCname(), customer.getGender(), customer.getBirthday(),
+				customer.getCellphone(), customer.getEmail(), customer.getDescription() };
 		try {
-			conn = DBConnect.getConnect();
-			pstmt = conn.prepareStatement(insertCus);
-			pstmt.setObject(1, UUID.randomUUID().toString().replaceAll("-", ""));
-			pstmt.setObject(2, customer.getCname());
-			pstmt.setObject(3, customer.getGender());
-			pstmt.setObject(4, customer.getBirthday());
-			pstmt.setObject(5, customer.getCellphone());
-			pstmt.setObject(6, customer.getEmail());
-			pstmt.setObject(7, customer.getDescription());
-			pstmt.executeUpdate();
-		}catch (SQLException e) {
-			throw new RuntimeException(e);
-		}finally{
-			DBConnect.closeDB(pstmt, conn, rs);
-		}
-		
-	}
-	//通过电话号码查询客户
-	public Customer findCusByPhone(String cellphone) {
-		Connection conn = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DBConnect.getConnect();
-			pstmt = conn.prepareStatement(findByPhone);
-			pstmt.setObject(1, cellphone);
-			rs = pstmt.executeQuery();
-			if (rs.next()) {
-				return new Customer(rs.getString("cid"), rs.getString("cname"), rs.getString("gender"),
-						rs.getString("birthday"), rs.getString("cellphone"), rs.getString("email"),
-						rs.getString("description"));
-
-			}
+			qr.update(insertCus, params);
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
-		}finally{
-			DBConnect.closeDB(pstmt, conn, rs);
 		}
-		return null;
+
 	}
-	//查找所有的客户信息,返回结果集
-	public List<Customer> selectAllCus() {
-		Connection conn = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-//		List<Customer> customers = new ArrayList<Customer>();
-		try {
-			conn = DBConnect.getConnect();
-			pstmt = conn.prepareStatement(seleceAllCus);
-			rs = pstmt.executeQuery();
-			List<Customer> customers = new ArrayList<Customer>();
-			while(rs.next()){
-				customers.add(new Customer(rs.getString(1),rs.getString(2),rs.getString(3),
-						rs.getString(4),rs.getString(5),rs.getString(6),rs.getString(7)));
-			}
-			return customers;
-		}catch(Exception e){
-			throw new RuntimeException(e);
-		}finally{
-			DBConnect.closeDB(pstmt, conn, rs);
-		}
-	}
-	//通过ID删除该条记录
-	public int deleteByID(String cid) {
-		Connection conn = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try{
-			conn = DBConnect.getConnect();
-			pstmt = conn.prepareStatement(deleteByID);
-			pstmt.setObject(1, cid);
-			return pstmt.executeUpdate();
-		}catch(Exception e){
-			throw new RuntimeException(e);
-		}finally{
-			DBConnect.closeDB(pstmt, conn, rs);
-		}
-	}
-	public int updateByID(String cid, Customer newCustomer) {
-		Connection conn = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try{
-			conn = DBConnect.getConnect();
-			pstmt = conn.prepareStatement(updateByID);
-			pstmt.setObject(1, newCustomer.getCname());
-			pstmt.setObject(2, newCustomer.getGender());
-			pstmt.setObject(3, newCustomer.getBirthday());
-			pstmt.setObject(4, newCustomer.getCellphone());
-			pstmt.setObject(5, newCustomer.getEmail());
-			pstmt.setObject(6, newCustomer.getDescription());
-			pstmt.setObject(7, cid);
-			
-			return pstmt.executeUpdate();
-		}catch(Exception e){
-			throw new RuntimeException(e);
-		}finally{
-			DBConnect.closeDB(pstmt, conn, rs);
-		}
-	}
-	public List<Customer> queryCusByCondition(Customer queryCondition) {
-		Connection conn = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try{
-			conn = DBConnect.getConnect();
-			pstmt = conn.prepareStatement(queryByCondition);
-			pstmt.setObject(1, "%"+queryCondition.getCname()+"%");
-			pstmt.setObject(2, queryCondition.getCname());
-			pstmt.setObject(3, "%"+queryCondition.getGender()+"%");
-			pstmt.setObject(4, queryCondition.getGender());
-			pstmt.setObject(5, "%"+queryCondition.getCellphone()+"%");
-			pstmt.setObject(6, queryCondition.getCellphone());
-			pstmt.setObject(7, "%"+queryCondition.getEmail()+"%");
-			pstmt.setObject(8, queryCondition.getEmail());
-			rs = pstmt.executeQuery();
-			List<Customer> customers = new ArrayList<Customer>();
-			while(rs.next()){
-				customers.add(new Customer(rs.getString(1),rs.getString(2),rs.getString(3),
-						rs.getString(4),rs.getString(5),rs.getString(6),rs.getString(7)));
-			}
-			return customers;
+
+	// 通过电话号码查询客户
+	public Customer findCusByPhone(String cellphone) {
+		QueryRunner qr = new QueryRunner(JdbcUtils.getDataSource());
 		
-		}catch(Exception e){
+		try {
+			Customer customer = qr.query(findByPhone, new BeanHandler<Customer>(Customer.class), cellphone);
+			System.out.println(cellphone);
+			System.out.println(customer);
+			return customer;
+			
+		} catch (SQLException e) {
 			throw new RuntimeException(e);
-		}finally{
-			DBConnect.closeDB(pstmt, conn, rs);
 		}
+
+	}
+
+	// 查找所有的客户信息,返回结果集
+	public List<Customer> selectAllCus() {
+		QueryRunner qr = new QueryRunner(JdbcUtils.getDataSource());
+		try {
+			List<Customer> list = qr.query(seleceAllCus, new BeanListHandler<Customer>(Customer.class));
+			return list;
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	// 通过ID删除该条记录
+	public int deleteByID(String cid) {
+		QueryRunner qr = new QueryRunner(JdbcUtils.getDataSource());
+		try {
+			return qr.update(deleteByID, cid);
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	// 通过ID更新
+	public int updateByID(String cid, Customer newCustomer) {
+		QueryRunner qr = new QueryRunner(JdbcUtils.getDataSource());
+		Object[] params = { newCustomer.getCname(), newCustomer.getGender(), newCustomer.getBirthday(),
+				newCustomer.getCellphone(), newCustomer.getEmail(), newCustomer.getDescription(), cid };
+		try {
+			return qr.update(updateByID, params);
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	//条件查询
+	public List<Customer> queryCusByCondition(Customer queryCondition) {
+		QueryRunner qr = new QueryRunner(JdbcUtils.getDataSource());
+		Object[] params = {
+				"%" + queryCondition.getCname() + "%",queryCondition.getCname(),
+				"%" + queryCondition.getGender() + "%",queryCondition.getGender(),
+				"%" + queryCondition.getCellphone() + "%",queryCondition.getCellphone(),
+				"%" + queryCondition.getEmail() + "%",queryCondition.getEmail()
+		};
+		
+		try {
+			List<Customer> list = qr.query(queryByCondition, new BeanListHandler<Customer>(Customer.class), params);
+			return list;
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+		
 	}
 
 }
