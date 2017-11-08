@@ -37,8 +37,6 @@ public class CustomerDao {
 		
 		try {
 			Customer customer = qr.query(findByPhone, new BeanHandler<Customer>(Customer.class), cellphone);
-			System.out.println(cellphone);
-			System.out.println(customer);
 			return customer;
 			
 		} catch (SQLException e) {
